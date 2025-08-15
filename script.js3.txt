@@ -1,0 +1,53 @@
+# FAQ Chatbot with NLP Matching
+# Requirements: nltk, scikit-learn
+
+import nltk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Sample FAQ data (questions and answers)
+faqs = [
+    {
+        "question": "What is your return policy?",
+        "answer": "You can return products within 30 days for a full refund."
+    },
+    {
+        "question": "How do I contact customer support?",
+        "answer": "You can contact customer support via email or phone."
+    },
+    {
+        "question": "Where is your company located?",
+        "answer": "Our company is located in New York City."
+    }
+]
+
+# Download required NLTK resources (only if not already downloaded)
+nltk.download('punkt')
+
+# Preprocess: Tokenization, lowercasing
+def preprocess(text):
+    tokens = nltk.word_tokenize(text.lower())
+    return " ".join(tokens)
+
+faq_questions = [preprocess(faq['question']) for faq in faqs]
+
+# TF-IDF Vectorization
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(faq_questions)
+
+def get_best_faq_answer(user_query):
+    user_query_processed = preprocess(user_query)
+    user_query_vec = vectorizer.transform([user_query_processed])
+    similarities = cosine_similarity(user_query_vec, tfidf_matrix)
+    best_faq_idx = similarities.argmax()
+    best_answer = faqs[best_faq_idx]['answer']
+    return best_answer
+
+# --- Chatbot interface ---
+while True:
+    user_input = input("You: ")
+    if user_input.lower() in ['exit', 'quit']:
+        print("Chatbot: Goodbye!")
+        break
+    answer = get_best_faq_answer(user_input)
+    print("Chatbot:", answer)
